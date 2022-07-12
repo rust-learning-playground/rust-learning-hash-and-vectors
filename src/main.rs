@@ -15,19 +15,19 @@ enum Operation {
 }
 
 static OPERATION_NUMBERS: phf::Map<&'static str, Operation> = phf_map! {
-	"1" => Operation::Add,
-	"2" => Operation::Remove,
-	"3" => Operation::ListDepartment,
-	"4" => Operation::ListAll,
-	"5" => Operation::Quit,
+    "1" => Operation::Add,
+    "2" => Operation::Remove,
+    "3" => Operation::ListDepartment,
+    "4" => Operation::ListAll,
+    "5" => Operation::Quit,
 };
 
 static OPERATION_BANNERS: phf::Map<&'static str, &'static str> = phf_map! {
-	"1" => "Add",
-	"2" => "Remove Department",
-	"3" => "List Members of Department",
-	"4" => "List All Departments With Members",
-	"5" => "Quit",
+    "1" => "Add",
+    "2" => "Remove Department",
+    "3" => "List Members of Department",
+    "4" => "List All Departments With Members",
+    "5" => "Quit",
 };
 
 struct UserDepartment {
@@ -36,12 +36,12 @@ struct UserDepartment {
 }
 
 fn menu() {
-    println!("\n--------------------------------");    
+    println!("\n--------------------------------");
     println!("Menu:");
     for (n, _) in Operation::iter().enumerate() {
-	println!("{} - {}", n+1, OPERATION_BANNERS.get(&(n+1).to_string()).unwrap());
+        println!("{} - {}", n+1, OPERATION_BANNERS.get(&(n+1).to_string()).unwrap());
     }
-    println!("--------------------------------");    
+    println!("--------------------------------");
 }
 
 fn read_input() -> String {
@@ -49,7 +49,7 @@ fn read_input() -> String {
     io::stdout().flush().unwrap();
     let mut input_string = String::new();
     io::stdin().read_line(&mut input_string)
-	.expect("Failed to read line");
+         .expect("Failed to read line");
     input_string.pop();
     input_string
 }
@@ -59,7 +59,7 @@ fn read_user() -> String {
     io::stdout().flush().unwrap();
     let mut input_user = String::new();
     io::stdin().read_line(&mut input_user)
-	.expect("Failed to read user");
+         .expect("Failed to read user");
     input_user.pop();
     input_user
 }
@@ -69,7 +69,7 @@ fn read_department() -> String {
     io::stdout().flush().unwrap();
     let mut input_department = String::new();
     io::stdin().read_line(&mut input_department)
-	.expect("Failed to read department");
+        .expect("Failed to read department");
     input_department.pop();
     input_department
 }
@@ -79,9 +79,9 @@ fn read_user_department() -> (String, String) {
 }
 
 
-fn process_list_all(h: &HashMap<String, String>) -> Result<(), ()> {
-    for u in h {
-	println!("{:?}", u);
+fn process_list_all(h: &HashMap<String, Vec<String>>) -> Result<(), ()> {
+    for (k, u) in h {
+	println!("Department:{}->Members:{:?}", k, u);
     }
     Ok(())
 }
@@ -91,59 +91,47 @@ fn prompt_user_and_department() -> UserDepartment {
     UserDepartment{ user: u, department: d }
 }
 
-fn process_add(h: &mut HashMap<String, String>) -> Result<(), ()> {
+fn process_add(h: &mut HashMap<String, Vec<String>>) -> Result<(), ()> {
     let user_department = prompt_user_and_department();
-    let u = h.get(&*user_department.department);
-    match u {
-    	None => {
-    	    h.insert(String::from(&user_department.department), String::from(&user_department.user));
-    	    Ok(())
-    	},
-    	Some (user) => {
-	    let mut s = String::from(user);
-	    s.push(',');
-	    s.push_str(&user_department.user);
-	    h.insert(String::from(&user_department.department), s);
-    	    Ok(())
-    	},
-    }
+    h.entry(user_department.department).or_insert(Vec::new()).push(user_department.user);
+    Ok(())
 }
 
-fn process_list_department(h: &mut HashMap<String, String>) -> Result<(), ()> {
+fn process_list_department(h: &mut HashMap<String, Vec<String>>) -> Result<(), ()> {
     let department = read_department();
     match h.get(&department) {
-	None => {
-	    println!("Department:{} does not exist !!!", department);
-	    Ok(())
-	}
-	Some(users) => {
-	    println!("{}", users);
-	    Ok(())
-	}
+        None => {
+            println!("Department:{} does not exist !!!", department);
+            Ok(())
+        }
+        Some(users) => {
+            println!("{:?}", users);
+            Ok(())
+        }
     }
 }
 
-fn process_remove_department(h: &mut HashMap<String, String>) -> Result<(), ()> {
+fn process_remove_department(h: &mut HashMap<String, Vec<String>>) -> Result<(), ()> {
     let department = read_department();
     match h.get(&department) {
-	None => {
-	    println!("Department:{} does not exist !!!", department);
-	    Ok(())
-	}
-	Some(_) => {
-	    h.remove(&department);
-	    Ok(())
-	}
+         None => {
+             println!("Department:{} does not exist !!!", department);
+             Ok(())
+         }
+         Some(_) => {
+             h.remove(&department);
+             Ok(())
+         }
     }
 }
 
-fn process_operation(o: Operation, h: &mut HashMap<String, String>) -> Result<(), ()> {
+fn process_operation(o: Operation, h: &mut HashMap<String, Vec<String>>) -> Result<(), ()> {
     match o {
-	Operation::Add => process_add(h),
-	Operation::Remove => process_remove_department(h),
-	Operation::ListDepartment => process_list_department(h),
-	Operation::ListAll => process_list_all(h),
-	_ => Err(()),
+         Operation::Add => process_add(h),
+         Operation::Remove => process_remove_department(h),
+         Operation::ListDepartment => process_list_department(h),
+         Operation::ListAll => process_list_all(h),
+         _ => Err(()),
     }
 }
 
@@ -151,31 +139,30 @@ fn read_operation() -> Operation {
     //let input_string = read_input();
     let op = OPERATION_NUMBERS.get(&read_input());
     match op {
-	Some(operation) => operation.clone(),
-	None => {
-	    println!("Invalid Option");
-	    read_operation()
-	}
+        Some(operation) => operation.clone(),
+        None => {
+            println!("Invalid Option");
+            read_operation()
+        }
     }
 }
 
 fn operation_loop() {
-    let mut user_hash: HashMap<String, String> = HashMap::new();
-    
+    let mut user_hash: HashMap<String, Vec<String>> = HashMap::new();
+
     loop {
-	// 1 - Show menu
-	menu();
-	
-	// 2 - Ask Operation
-	let operation = read_operation();
-	
-	// 3 - Process Operation
-	println!("{:?}:", operation);
-	match operation {
-	    Operation::Quit => { break; },
-	    _ => { process_operation(operation, &mut user_hash).expect("Error on operation"); },
-	}
-	
+        // 1 - Show menu
+        menu();
+
+        // 2 - Ask Operation
+        let operation = read_operation();
+
+        // 3 - Process Operation
+        println!("{:?}:", operation);
+        match operation {
+            Operation::Quit => { break; },
+            _ => { process_operation(operation, &mut user_hash).expect("Error on operation"); },
+        }
     }
 }
 
